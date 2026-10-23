@@ -1,0 +1,36 @@
+{
+  "name": "streamvibe",
+  "version": "1.9.0",
+  "description": "Free music streaming app powered by YouTube and SoundCloud",
+  "main": "server.js",
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ],
+    "targets": [
+      "node18-linux-x64",
+      "node18-win-x64"
+    ]
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "music",
+    "streaming",
+    "youtube"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.3.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
+}

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lite="false" data-density="comfortable" data-corners="normal" data-font-size="medium">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0908">
+  <title>///AMG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/player.css">
+  <link rel="stylesheet" href="/css/settings.css">
+  <script>
+    (function(){
+      try {
+        var s = JSON.parse(localStorage.getItem('sv_settings') || '{}');
+        var r = document.documentElement;
+        if (s.theme) r.setAttribute('data-theme', s.theme === 'auto' ? (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark') : s.theme);
+        if (s.lite) r.setAttribute('data-lite', 'true');
+        if (s.density) r.setAttribute('data-density', s.density);
+        if (s.corners) r.setAttribute('data-corners', s.corners);
+        if (s.fontSize) r.setAttribute('data-font-size', s.fontSize);
+        r.setAttribute('data-font', s.fontFamily || 'inter');
+        r.setAttribute('data-glass', s.glass ? 'true' : 'false');
+        if (s.blurStrength != null) r.style.setProperty('--blur-strength', s.blurStrength + 'px');
+        if (s.bgDim != null) r.style.setProperty('--bg-dim', (s.bgDim / 100).toFixed(2));
+      } catch(e){}
+    })();
+  </script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
+  <!-- Background -->
+  <div class="bg-artwork" id="bgArtwork">
+    <img src="" alt="" id="bgArtImg" loading="lazy">
+    <video id="bgVideo" muted loop playsinline preload="none" style="display:none"></video>
+    <div class="accent-overlay" id="accentOverlay"></div>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="logo">
+        <span class="logo-amg"><span class="logo-slashes">///</span>AMG</span>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-item active" data-page="home" tabindex="0" role="link" aria-current="page">
+          <i class="fas fa-home"></i><span>Home</span>
+        </div>
+        <div class="nav-item" data-page="search-page" tabindex="0" role="link">
+          <i class="fas fa-search"></i><span>Search</span>
+        </div>
+        <div class="nav-item" data-page="library" tabindex="0" role="link">
+          <i class="fas fa-record-vinyl"></i><span>Library</span>
+        </div>
+        <div class="nav-item" data-page="liked" tabindex="0" role="link">
+          <i class="fas fa-heart"></i><span>Liked Songs</span>
+        </div>
+        <div class="nav-item" data-page="history" tabindex="0" role="link">
+          <i class="fas fa-clock-rotate-left"></i><span>History</span>
+        </div>
+        <div class="nav-item" data-page="race" tabindex="0" role="link">
+          <i class="fas fa-flag-checkered"></i><span>Race</span>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Playlists</div>
+        <div class="sidebar-playlists" id="sidebarPlaylists"></div>
+        <button class="btn btn-secondary btn-sm" id="newPlaylistBtn" style="width:100%;margin-top:var(--sp-2)">
+          <i class="fas fa-plus"></i> New Playlist
+        </button>
+      </div>
+
+      <div style="margin-top:auto;padding-top:var(--sp-3);border-top:1px solid var(--border-subtle)">
+        <div class="nav-item" data-page="settings" tabindex="0" role="link">
+          <i class="fas fa-gear"></i><span>Settings</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-area" id="main-content" role="main">
+      <div class="top-bar">
+        <button class="btn-icon menu-toggle" id="menuToggle" aria-label="Toggle menu" style="display:none">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="nav-arrows">
+          <button id="navBack" aria-label="Go back"><i class="fas fa-chevron-left"></i></button>
+          <button id="navForward" aria-label="Go forward"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="search-container collapsed">
+          <div class="search-box" id="searchBox" role="search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="text" id="searchInput" placeholder="Search songs, artists..." aria-label="Search music" autocomplete="off">
+            <button class="clear-btn" id="searchClear" aria-label="Clear search"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="search-suggestions" id="searchSuggestions" role="listbox"></div>
+        </div>
+        <div class="top-actions">
+          <button class="btn-icon top-action" id="minimizeBtn" title="Minimize (H)" aria-label="Minimize content" aria-pressed="false"><i class="fas fa-window-minimize"></i></button>
+          <button class="btn-icon top-action" id="raceToggle" title="Race View (R)" aria-label="Race view" aria-pressed="false"><i class="fas fa-flag-checkered"></i></button>
+          <button class="btn-icon top-action" id="themeCycle" title="Switch theme (T)" aria-label="Switch theme"><i class="fas fa-circle-half-stroke"></i></button>
+          <button class="btn-icon top-action" id="liteToggle" title="Lite Mode (B)" aria-label="Toggle Lite Mode" aria-pressed="false"><i class="fas fa-bolt"></i></button>
+        </div>
+      </div>
+
+      <div class="page-content">
+        <!-- HOME PAGE -->
+        <div class="page active" id="page-home">
+          <div id="homeDefault">
+            <div class="section-header" style="margin-bottom:var(--sp-2)">
+              <h1 class="section-title">Good <span id="greeting">Evening</span></h1>
+            </div>
+
+            <!-- Race banner -->
+            <div class="race-banner" id="raceBanner" role="button" tabindex="0" aria-label="Open 3D Race View">
+              <div class="race-banner-glow"></div>
+              <div class="race-banner-text">
+                <span class="race-banner-tag"><i class="fas fa-flag-checkered"></i> NEW</span>
+                <h3>3D Race View</h3>
+                <p>Every song becomes an F1 car. Overtake to switch tracks — the car that reaches P1 starts playing.</p>
+              </div>
+              <button class="btn btn-primary race-banner-cta"><i class="fas fa-play"></i> Start Race</button>
+            </div>
+
+            <!-- Quick Picks -->
+            <div class="quick-picks" id="quickPicksSection">
+              <div class="quick-picks-header">
+                <h3>Quick Picks</h3>
+                <div class="quick-picks-nav">
+                  <button id="qpPrev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+                  <button id="qpNext" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+                </div>
+              </div>
+              <div class="quick-picks-grid" id="quickPicksGrid"></div>
+            </div>
+
+            <!-- Recently Played -->
+            <div class="scroll-section" id="recentSection" style="display:none">
+              <div class="scroll-section-header">
+                <h3>Recently Played</h3>
+                <a href="#" data-page="history">See All</a>
+              </div>
+              <div class="scroll-row" id="recentScroll"></div>
+            </div>
+
+            <!-- Mood Section -->
+            <div class="scroll-section" id="moodSection">
+              <div class="scroll-section-header"><h3>Browse by Mood</h3></div>
+              <div class="mood-grid" id="moodGrid"></div>
+            </div>
+
+            <div class="scroll-section" id="moodResultsSection" style="display:none">
+              <div class="scroll-section-header">
+                <h3 id="moodResultsTitle">Results</h3>
+                <button class="btn btn-ghost btn-sm" id="moodBackBtn"><i class="fas fa-arrow-left"></i> Back</button>
+              </div>
+              <div class="track-grid" id="moodResultsGrid"></div>
+            </div>
+
+
+          </div>
+
+          <!-- Search Results -->
+          <div id="searchOverlay" style="display:none">
+            <div class="search-results-header">
+              <button class="btn btn-ghost btn-sm" id="searchBackBtn" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+              <h2 class="section-title" id="searchResultsTitle">Results</h2>
+            </div>
+            <div class="filter-tabs" id="filterTabs" role="tablist">
+              <button class="filter-tab active" data-filter="all" role="tab">All</button>
+              <button class="filter-tab" data-filter="songs" role="tab">Songs</button>
+              <button class="filter-tab" data-filter="artists" role="tab">Artists</button>
+              <div class="tab-indicator" id="tabIndicator"></div>
+            </div>
+            <div id="searchResultsContent"></div>
+          </div>
+        </div>
+
+        <!-- SEARCH PAGE -->
+        <div class="page" id="page-search-page">
+          <div class="section-header"><h1 class="section-title">Search</h1></div>
+          <div id="searchPageContent">
+            <div class="scroll-section">
+              <div class="scroll-section-header"><h3>Browse All</h3></div>
+              <div class="mood-grid" id="browseGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIBRARY PAGE -->
+        <div class="page" id="page-library">
+          <div class="section-header"><h1 class="section-title">Your Library</h1></div>
+          <div id="libraryContent"></div>
+        </div>
+
+        <!-- LIKED PAGE -->
+        <div class="page" id="page-liked">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title">Liked Songs</h1>
+              <p class="section-subtitle" id="likedCount">0 songs</p>
+            </div>
+            <button class="btn btn-primary btn-sm" id="playAllLiked"><i class="fas fa-play"></i> Play All</button>
+          </div>
+          <div id="likedContent"></div>
+        </div>
+
+        <!-- HISTORY PAGE -->
+        <div class="page" id="page-history">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title">Listening History</h1>
+              <p class="section-subtitle" id="historyCount">0 songs</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="clearHistory"><i class="fas fa-trash"></i> Clear</button>
+          </div>
+          <div id="historyContent"></div>
+        </div>
+
+        <!-- SETTINGS PAGE -->
+        <div class="page" id="page-settings">
+          <div class="settings-page">
+            <h1 class="section-title" style="margin-bottom:var(--sp-4)">Settings</h1>
+            <div class="settings-search">
+              <i class="fas fa-search"></i>
+              <input type="text" id="settingsSearchInput" placeholder="Search settings..." aria-label="Search settings">
+            </div>
+            <div class="settings-tabs" id="settingsTabs">
+              <button class="settings-tab active" data-tab="general">General</button>
+              <button class="settings-tab" data-tab="appearance">Appearance</button>
+              <button class="settings-tab" data-tab="customize">Customize</button>
+              <button class="settings-tab" data-tab="playback">Playback</button>
+              <button class="settings-tab" data-tab="privacy">Privacy</button>
+              <button class="settings-tab" data-tab="about">About</button>
+            </div>
+
+            <!-- General Tab -->
+            <div class="settings-section" data-tab="general">
+              <h3 class="settings-section-title"><i class="fas fa-sliders"></i> General</h3>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Startup Page</h4><p>Which page to show on launch</p></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingStartup">
+                    <option value="home">Home</option>
+                    <option value="library">Library</option>
+                    <option value="liked">Liked Songs</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Language</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingLang">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="pt">Português</option>
+                    <option value="hi">हिन्दी</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Device</h4><p>UI scale for your screen size</p></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingDevice">
+                    <option value="laptop">Laptop / PC — 100%</option>
+                    <option value="tablet">Tablet — 50%</option>
+                    <option value="phone">Phone — 25%</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Show Notifications</h4><p>Pop-up messages for actions</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingToasts" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Show Recent Searches</h4><p>Display recent searches under the search box</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingSearchHistory" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Auto Performance Detection</h4><p>Automatically enable Lite Mode on low-end devices</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingAutoPerf" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+            </div>
+
+            <!-- Appearance Tab -->
+            <div class="settings-section" data-tab="appearance" style="display:none">
+              <h3 class="settings-section-title"><i class="fas fa-palette"></i> Appearance</h3>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Theme</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingTheme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="amoled">AMOLED Black</option>
+                    <option value="auto">Auto (System)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Accent Color</h4><p>Auto extracts from album art</p></div>
+                <div class="setting-control">
+                  <div class="color-swatches" id="accentSwatches">
+                    <div class="color-swatch active" data-color="auto" style="background:linear-gradient(135deg,#E7A98D,#D4896D)" title="Auto"></div>
+                    <div class="color-swatch" data-color="0,65%" style="background:hsl(0,65%,72%)" title="Red"></div>
+                    <div class="color-swatch" data-color="30,65%" style="background:hsl(30,65%,72%)" title="Orange"></div>
+                    <div class="color-swatch" data-color="200,60%" style="background:hsl(200,60%,72%)" title="Blue"></div>
+                    <div class="color-swatch" data-color="260,55%" style="background:hsl(260,55%,72%)" title="Purple"></div>
+                    <div class="color-swatch" data-color="330,60%" style="background:hsl(330,60%,72%)" title="Pink"></div>
+                    <div class="color-swatch" data-color="145,50%" style="background:hsl(145,50%,65%)" title="Green"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Custom Hue</h4><p>Fine-tune the accent color</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="settingAccentHue" min="0" max="360" value="20" aria-label="Accent hue"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Custom Saturation</h4></div>
+                <div class="setting-control"><input type="range" class="range-input" id="settingAccentSat" min="10" max="100" value="65" aria-label="Accent saturation"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Background Style</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingBgStyle">
+                    <option value="artwork">Blurred Artwork</option>
+                    <option value="gradient">Gradient</option>
+                    <option value="video">Video</option>
+                    <option value="solid">Solid</option>
+                    <option value="none">None</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row" id="videoBgQuickRow">
+                <div class="setting-label"><h4>Video Background</h4><p>Set a looping video behind the app</p></div>
+                <div class="setting-control" style="display:flex;gap:var(--sp-2)">
+                  <button class="btn btn-secondary btn-sm" id="videoBgUploadBtn"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+                  <button class="btn btn-secondary btn-sm" id="videoBgUrlBtn2"><i class="fas fa-link"></i> URL</button>
+                </div>
+              </div>
+              <div class="setting-row" id="videoBgRow" style="display:none">
+                <div class="setting-label" style="flex:1">
+                  <h4>Video Preview</h4>
+                  <p>Currently applied video (MP4/WebM, max 20MB)</p>
+                  <div class="video-upload-zone" id="videoDropZone" style="margin-top:var(--sp-2)">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h4>Upload video from device</h4>
+                    <p>or drag and drop here</p>
+                  </div>
+                  <div class="video-preview" id="videoPreview" style="display:none">
+                    <video id="videoPreviewPlayer" muted loop playsinline></video>
+                    <div class="video-actions">
+                      <button class="btn btn-secondary btn-sm" id="videoUrlBtn"><i class="fas fa-link"></i> Use URL</button>
+                      <button class="btn btn-secondary btn-sm" id="videoRemoveBtn"><i class="fas fa-trash"></i> Remove</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>UI Density</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingDensity">
+                    <option value="compact">Compact</option>
+                    <option value="comfortable" selected>Comfortable</option>
+                    <option value="spacious">Spacious</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Corner Roundness</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingCorners">
+                    <option value="sharp">Sharp</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="round">Round</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Font Size</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingFontSize">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Font Family</h4></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingFontFamily">
+                    <option value="inter" selected>Inter</option>
+                    <option value="system">System</option>
+                    <option value="mono">Monospace</option>
+                    <option value="serif">Serif</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Background Blur</h4><p>Blur amount for the artwork background</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="settingBlur" min="0" max="120" value="60" aria-label="Background blur"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Background Dim</h4><p>Darken the background for readability</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="settingBgDim" min="0" max="100" value="50" aria-label="Background dim"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Glass Effects</h4><p>Frosted, translucent panels</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingGlass"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Lite Mode</h4><p>Stops all animations &amp; effects for low-end devices. Music keeps playing normally.</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingLite"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+            </div>
+
+            <!-- Customize Tab -->
+            <div class="settings-section" data-tab="customize" style="display:none">
+              <h3 class="settings-section-title"><i class="fas fa-wand-magic-sparkles"></i> Customize</h3>
+              <p style="font-size:var(--text-xs);color:var(--text-tertiary);margin:-4px 0 var(--sp-4)">Fine-tune every color, shape, motion and effect &mdash; or drop in your own CSS for total control.</p>
+
+              <h4 class="settings-group-title"><i class="fas fa-palette"></i> Colors</h4>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Accent Hue</h4></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cHue" min="0" max="360" value="20" aria-label="Accent hue"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Accent Saturation</h4></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cSat" min="0" max="100" value="65" aria-label="Accent saturation"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Accent Lightness</h4></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cLight" min="0" max="100" value="72" aria-label="Accent lightness"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Background Color</h4><p>Empty = theme default</p></div>
+                <div class="setting-control"><input type="color" id="cBg" class="color-input" value="#0B0908" aria-label="Background color"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Surface Color</h4></div>
+                <div class="setting-control"><input type="color" id="cSurface" class="color-input" value="#171412" aria-label="Surface color"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Text Color</h4></div>
+                <div class="setting-control"><input type="color" id="cText" class="color-input" value="#F5F3F1" aria-label="Text color"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Border Color</h4></div>
+                <div class="setting-control"><input type="color" id="cBorder" class="color-input" value="#302A26" aria-label="Border color"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Use Custom Colors</h4><p>Override the theme palette with the colors above</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="cUseColors"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+
+              <h4 class="settings-group-title"><i class="fas fa-shapes"></i> Shape &amp; Motion</h4>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Corner Radius</h4><p>Scale of every rounded corner</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cRadius" min="0" max="250" value="100" aria-label="Corner radius scale"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Animation Speed</h4><p>0 = off, 100 = default</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cAnimSpeed" min="0" max="300" value="100" aria-label="Animation speed"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Hover Glow</h4><p>Accent glow on hover / active elements</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cGlow" min="0" max="200" value="100" aria-label="Hover glow"></div>
+              </div>
+
+              <h4 class="settings-group-title"><i class="fas fa-sparkles"></i> Effects</h4>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Film Grain</h4><p>Subtle animated grain overlay</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="cGrain"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Custom Cursor</h4><p>Accent-coloured pointer cursor</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="cCursor"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+
+              <h4 class="settings-group-title"><i class="fas fa-droplet"></i> Glass &amp; Hover</h4>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Glass UI</h4><p>Translucent panels, cards &amp; controls</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="cGlass"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Glass Blur</h4><p>Frosting intensity of glass surfaces</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cGlassBlur" min="0" max="40" value="16" aria-label="Glass blur"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Glass Tint</h4><p>How opaque the glass surfaces are</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cGlassTint" min="0" max="60" value="9" aria-label="Glass tint"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Hover Effect</h4><p>What happens when you point at a song or button</p></div>
+                <div class="setting-control"><select class="select-input" id="cHoverStyle" aria-label="Hover effect">
+                  <option value="glow">Glow</option>
+                  <option value="lift">Lift</option>
+                  <option value="bold">Solidify</option>
+                  <option value="none">None</option>
+                </select></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Hover Intensity</h4><p>Strength of the hover effect</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="cHoverIntensity" min="0" max="200" value="100" aria-label="Hover intensity"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Glow Border</h4><p>Accent outline on the hovered element</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="cGlowBorder"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+
+              <h4 class="settings-group-title"><i class="fas fa-code"></i> Custom CSS</h4>
+              <div class="setting-row">
+                <div class="setting-label" style="flex:1"><h4>Your CSS</h4><p>Applied on top of everything &mdash; unlimited control</p></div>
+              </div>
+              <textarea id="cCss" class="css-editor" placeholder="/* e.g. .player-bar { backdrop-filter: blur(20px); } */" spellcheck="false"></textarea>
+              <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2)">
+                <button class="btn btn-secondary btn-sm" id="cCssApply"><i class="fas fa-check"></i> Apply CSS</button>
+                <button class="btn btn-secondary btn-sm" id="cCssClear"><i class="fas fa-eraser"></i> Clear CSS</button>
+              </div>
+
+              <h4 class="settings-group-title"><i class="fas fa-bookmark"></i> Presets</h4>
+              <div style="display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap;margin-bottom:var(--sp-2)">
+                <input type="text" id="cPresetName" class="text-input" placeholder="Preset name" style="flex:1;min-width:140px">
+                <button class="btn btn-secondary btn-sm" id="cPresetSave"><i class="fas fa-save"></i> Save</button>
+              </div>
+              <div id="cPresetList" class="preset-list"></div>
+            </div>
+
+            <!-- Playback Tab -->
+            <div class="settings-section" data-tab="playback" style="display:none">
+              <h3 class="settings-section-title"><i class="fas fa-play"></i> Playback</h3>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Autoplay</h4><p>Play similar songs when queue ends</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingAutoplay" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Resume Playback</h4><p>Remember where a track left off and restore it</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingResume" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Audio Quality</h4><p>Playback quality hint &middot; up to ~160 kbps (YouTube maximum)</p></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingAudioQuality">
+                    <option value="auto">Auto (recommended)</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                    <option value="low">Data Saver</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Crossfade</h4><p>Seconds between tracks</p></div>
+                <div class="setting-control"><input type="range" class="range-input" id="settingCrossfade" min="0" max="12" value="0"></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Seek Duration</h4><p>Seconds for forward/back buttons</p></div>
+                <div class="setting-control">
+                  <select class="select-input" id="settingSeekDuration">
+                    <option value="5">5 seconds</option>
+                    <option value="10" selected>10 seconds</option>
+                    <option value="15">15 seconds</option>
+                    <option value="30">30 seconds</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Scroll Wheel Volume</h4><p>Adjust volume by scrolling over the player</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingScrollVolume" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+            </div>
+
+            <!-- Privacy Tab -->
+            <div class="settings-section" data-tab="privacy" style="display:none">
+              <h3 class="settings-section-title"><i class="fas fa-shield-halved"></i> Privacy</h3>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Listening History</h4><p>Track songs you play</p></div>
+                <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="settingHistory" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Clear Recent Searches</h4><p>Remove your recent search terms</p></div>
+                <div class="setting-control"><button class="btn btn-secondary btn-sm" id="clearSearchHistory"><i class="fas fa-eraser"></i> Clear</button></div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label"><h4>Clear All Data</h4><p>Remove all saved settings, history, and playlists</p></div>
+                <div class="setting-control"><button class="btn btn-secondary btn-sm" id="clearAllData" style="color:#e74c3c"><i class="fas fa-trash"></i> Clear</button></div>
+              </div>
+            </div>
+
+            <!-- About Tab -->
+            <div class="settings-section" data-tab="about" style="display:none">
+              <h3 class="settings-section-title"><i class="fas fa-info-circle"></i> About</h3>
+              <div style="text-align:center;padding:var(--sp-4) 0">
+                <div style="font-size:var(--text-xl);font-weight:700;color:var(--accent);margin-bottom:var(--sp-1)">
+                  <span class="logo-slashes">///</span>AMG
+                </div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary)">Version 1.9.0</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-top:var(--sp-2)">High-fidelity streaming powered by YouTube &amp; SoundCloud</div>
+              </div>
+            </div>
+
+            <!-- Keyboard Shortcuts -->
+            <div class="settings-section" data-tab="general">
+              <h3 class="settings-section-title"><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h3>
+              <div class="shortcut-list">
+                <div class="shortcut-item"><span>Play / Pause</span><span class="shortcut-key">Space</span></div>
+                <div class="shortcut-item"><span>Next Track</span><span class="shortcut-key">Shift+→</span></div>
+                <div class="shortcut-item"><span>Previous Track</span><span class="shortcut-key">Shift+←</span></div>
+                <div class="shortcut-item"><span>Seek Back</span><span class="shortcut-key">J / ←</span></div>
+                <div class="shortcut-item"><span>Seek Forward</span><span class="shortcut-key">L / →</span></div>
+                <div class="shortcut-item"><span>Mute</span><span class="shortcut-key">M</span></div>
+                <div class="shortcut-item"><span>Search</span><span class="shortcut-key">/</span></div>
+                <div class="shortcut-item"><span>Queue</span><span class="shortcut-key">Q</span></div>
+                <div class="shortcut-item"><span>Lyrics</span><span class="shortcut-key">Y</span></div>
+                <div class="shortcut-item"><span>Lite Mode</span><span class="shortcut-key">B</span></div>
+                <div class="shortcut-item"><span>Race View</span><span class="shortcut-key">R</span></div>
+                <div class="shortcut-item"><span>Switch Theme</span><span class="shortcut-key">T</span></div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-4)">
+              <button class="btn btn-secondary btn-sm" id="resetSettings"><i class="fas fa-undo"></i> Reset</button>
+              <button class="btn btn-secondary btn-sm" id="exportSettings"><i class="fas fa-download"></i> Export</button>
+              <button class="btn btn-secondary btn-sm" id="importSettings"><i class="fas fa-upload"></i> Import</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL (Lyrics / Queue) -->
+    <div class="right-panel" id="rightPanel">
+      <div class="right-panel-tabs">
+        <button class="right-panel-tab active" data-rptab="lyrics">Lyrics</button>
+        <button class="right-panel-tab" data-rptab="queue">Queue</button>
+      </div>
+      <div class="right-panel-content">
+        <div id="rpLyrics" class="queue-section">
+          <div class="lyrics-header">LYRICS <button class="lyrics-refresh" id="lyricsRefresh" title="Refresh lyrics" aria-label="Refresh lyrics"><i class="fas fa-rotate-right"></i></button></div>
+          <div class="lyrics-container" id="lyricsContainer">
+            <div class="lyrics-placeholder">
+              <i class="fas fa-music"></i>
+              <p>Lyrics will appear here</p>
+            </div>
+          </div>
+        </div>
+        <div id="rpQueue" class="queue-section" style="display:none">
+          <div id="queueHistorySection">
+            <div class="queue-section-title">History</div>
+            <div id="queueHistory"></div>
+          </div>
+          <div id="queueNowSection" style="margin-top:var(--sp-3)">
+            <div class="queue-section-title">Now Playing</div>
+            <div id="queueNow"></div>
+          </div>
+          <div id="queueNextSection" style="margin-top:var(--sp-3)">
+            <div class="queue-section-title">Next in Queue</div>
+            <div id="queueNext"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MINI PLAYER -->
+    <div class="player-bar" id="playerBar" role="region" aria-label="Music player">
+      <div class="player-info">
+        <div class="player-thumb-wrap">
+          <img class="player-thumb" id="playerThumb" src="" alt="Album art" loading="lazy">
+          <div class="eq-bars" id="eqBars" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="player-meta">
+          <span class="player-song-title" id="playerTitle">No track playing</span>
+          <span class="player-artist" id="playerAuthor">---</span>
+        </div>
+        <button class="player-like-btn btn-icon sm" id="playerLikeBtn" aria-label="Like" title="Like"><i class="far fa-heart"></i></button>
+        <button class="player-add-btn btn-icon sm" id="playerAddBtn" aria-label="Add to playlist" title="Add to playlist"><i class="fas fa-plus"></i></button>
+      </div>
+      <div class="player-controls-center">
+        <div class="player-buttons">
+          <button class="ctrl-btn btn-icon sm" id="btnShuffle" aria-label="Shuffle"><i class="fas fa-shuffle"></i></button>
+          <button class="ctrl-btn btn-icon sm" id="btnPrev" aria-label="Previous"><i class="fas fa-backward-step"></i></button>
+          <button class="ctrl-btn play-pause" id="btnPlay" aria-label="Play"><i class="fas fa-play"></i></button>
+          <button class="ctrl-btn btn-icon sm" id="btnNext" aria-label="Next"><i class="fas fa-forward-step"></i></button>
+          <button class="ctrl-btn btn-icon sm" id="btnRepeat" aria-label="Repeat"><i class="fas fa-repeat"></i></button>
+        </div>
+        <div class="progress-row">
+          <span class="time-label" id="currentTime">0:00</span>
+          <div class="progress-bar-wrap" id="progressWrap" role="slider" aria-label="Seek" tabindex="0">
+            <div class="progress-track"><div class="progress-fill" id="progressFill"><div class="progress-thumb"></div></div></div>
+          </div>
+          <span class="time-label" id="totalTime">0:00</span>
+        </div>
+      </div>
+      <div class="player-right">
+        <button class="ctrl-btn btn-icon sm" id="btnSleep" aria-label="Sleep timer" title="Sleep timer"><i class="fas fa-moon"></i><span class="sleep-badge" id="sleepBadge"></span></button>
+        <button class="ctrl-btn btn-icon sm" id="btnLyrics" aria-label="Lyrics" title="Lyrics"><i class="fas fa-align-left"></i></button>
+        <button class="ctrl-btn btn-icon sm" id="btnQueue" aria-label="Queue" title="Queue"><i class="fas fa-bars-staggered"></i></button>
+        <div class="volume-wrap">
+          <button class="ctrl-btn btn-icon sm" id="btnVolume" aria-label="Volume"><i class="fas fa-volume-high"></i></button>
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" aria-label="Volume">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOW PLAYING OVERLAY -->
+  <div class="now-playing-overlay" id="nowPlaying" role="dialog" aria-label="Now Playing">
+    <div class="np-bg"><img src="" alt="" id="npBgImg"></div>
+    <div class="np-header">
+      <button class="btn-icon np-close" id="npClose" aria-label="Close"><i class="fas fa-chevron-down"></i></button>
+      <span style="font-size:var(--text-xs);color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px">Now Playing</span>
+      <button class="btn-icon" id="npMore" aria-label="More"><i class="fas fa-ellipsis"></i></button>
+    </div>
+    <div class="np-body">
+      <div class="np-artwork-col">
+        <div class="np-artwork-wrap" id="npArtworkWrap">
+          <img class="np-artwork" id="npArtwork" src="" alt="Album art">
+        </div>
+        <div class="np-info">
+          <div class="np-title" id="npTitle">No track</div>
+          <div class="np-author" id="npAuthor">---</div>
+        </div>
+      </div>
+      <div class="np-lyrics-col" id="npLyricsCol">
+        <div class="lyrics-header">LYRICS <button class="lyrics-refresh" id="npLyricsRefresh" title="Refresh lyrics" aria-label="Refresh lyrics"><i class="fas fa-rotate-right"></i></button></div>
+        <div class="lyrics-container" id="npLyricsContainer">
+          <div class="lyrics-placeholder">
+            <i class="fas fa-music"></i>
+            <p>Lyrics will appear here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="np-controls">
+      <div class="np-progress-row">
+        <span class="time-label" id="npCurrentTime">0:00</span>
+        <div class="np-progress-wrap" id="npProgressWrap" role="slider" aria-label="Seek" tabindex="0">
+          <div class="np-progress-track"><div class="np-progress-fill" id="npProgressFill"><div class="np-progress-thumb"></div></div></div>
+        </div>
+        <span class="time-label" id="npTotalTime">0:00</span>
+      </div>
+      <div class="np-buttons">
+        <button class="ctrl-btn btn-icon" id="npShuffle" aria-label="Shuffle"><i class="fas fa-shuffle"></i></button>
+        <button class="ctrl-btn btn-icon" id="npPrev" aria-label="Previous"><i class="fas fa-backward-step"></i></button>
+        <button class="ctrl-btn play-pause" id="npPlay" aria-label="Play"><i class="fas fa-play"></i></button>
+        <button class="ctrl-btn btn-icon" id="npNext" aria-label="Next"><i class="fas fa-forward-step"></i></button>
+        <button class="ctrl-btn btn-icon" id="npRepeat" aria-label="Repeat"><i class="fas fa-repeat"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="playlistModal">
+    <div class="modal">
+      <h2 id="playlistModalTitle">Create Playlist</h2>
+      <input type="text" id="playlistNameInput" placeholder="Playlist name" style="width:100%;padding:8px 12px;background:var(--bg-base);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font-size:var(--text-sm);outline:none" aria-label="Playlist name">
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" id="playlistModalCancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="playlistModalSave">Create</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="videoUrlModal">
+    <div class="modal">
+      <h2>Video Background URL</h2>
+      <input type="url" id="videoUrlInput" placeholder="https://example.com/video.mp4" style="width:100%;padding:8px 12px;background:var(--bg-base);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font-size:var(--text-sm);outline:none" aria-label="Video URL">
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" id="videoUrlCancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="videoUrlSave">Apply</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="videoFileInput" accept="video/mp4,video/webm" style="display:none">
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== F1 RACE VIEW ===== -->
+  <div id="raceOverlay" class="race-overlay" aria-hidden="true">
+    <div class="race-scene">
+      <div class="race-world" id="raceWorld">
+        <div class="race-ground"></div>
+        <div class="race-track" id="raceTrack"></div>
+        <div class="race-start" id="raceStart"></div>
+        <div class="race-stand" style="--sx:-460px;--sz:-300px"><div class="stand-roof"></div><div class="stand-body"></div></div>
+        <div class="race-stand" style="--sx:420px;--sz:-320px"><div class="stand-roof"></div><div class="stand-body"></div></div>
+        <div class="race-stand" style="--sx:-460px;--sz:300px"><div class="stand-roof"></div><div class="stand-body"></div></div>
+        <div class="race-stand" style="--sx:420px;--sz:300px"><div class="stand-roof"></div><div class="stand-body"></div></div>
+        <div class="race-cars" id="raceCars"></div>
+      </div>
+    </div>
+
+    <div class="race-hud">
+      <div class="race-hud-top">
+        <div class="race-title"><i class="fas fa-flag-checkered"></i> RACE</div>
+        <div class="race-now" id="raceNow">
+          <img id="raceNowArt" alt="">
+          <div class="race-now-info"><span class="race-now-lab">NOW PLAYING</span><span id="raceNowTitle">—</span></div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="raceExit" aria-label="Exit race view"><i class="fas fa-times"></i> Exit</button>
+      </div>
+
+      <div class="race-board" id="raceBoard"></div>
+
+      <div class="race-controls">
+        <button class="ctrl-btn race-ctrl" id="racePrev" aria-label="Previous car" title="Previous"><i class="fas fa-backward-step"></i></button>
+        <button class="ctrl-btn race-ctrl race-overtake" id="raceOvertake" aria-label="Overtake" title="Overtake"><i class="fas fa-bolt"></i> OVERTAKE</button>
+        <button class="ctrl-btn race-ctrl" id="raceNext" aria-label="Next car" title="Next"><i class="fas fa-forward-step"></i></button>
+      </div>
+      <div class="race-status" id="raceStatus"></div>
+      <div class="race-ticker" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- ===== DEVICE SELECT (first launch) ===== -->
+  <div id="deviceModal" class="device-modal" role="dialog" aria-modal="true" aria-labelledby="deviceTitle" aria-hidden="true">
+    <div class="device-modal-inner">
+      <div class="device-logo"><span class="logo-slashes">///</span>AMG</div>
+      <h1 class="device-title" id="deviceTitle">Choose your device</h1>
+      <p class="device-sub">We'll scale the interface to fit your screen. You can change this later in Settings.</p>
+      <div class="device-options">
+        <button class="device-card" data-device="laptop" type="button">
+          <i class="fas fa-laptop"></i>
+          <span class="device-name">Laptop / PC</span>
+          <span class="device-scale">100% scale</span>
+        </button>
+        <button class="device-card" data-device="tablet" type="button">
+          <i class="fas fa-tablet-screen-button"></i>
+          <span class="device-name">Tablet</span>
+          <span class="device-scale">50% scale</span>
+        </button>
+        <button class="device-card" data-device="phone" type="button">
+          <i class="fas fa-mobile-screen-button"></i>
+          <span class="device-name">Phone</span>
+          <span class="device-scale">25% scale</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
